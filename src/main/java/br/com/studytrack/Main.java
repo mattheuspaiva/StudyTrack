@@ -9,42 +9,31 @@ import br.com.studytrack.view.MenuView;
 import java.util.Scanner;
 
 public class Main {
-
     public static void main(String[] args) {
 
-        Scanner scanner = new Scanner(System.in);
-
+        Scanner leitor = new Scanner(System.in);
         try {
             // Conectar com o RocksDB
             RocksDBUtil.conectar();
-
             // Criar o DAO
             SessaoEstudoDAO dao = new SessaoEstudoDAO();
-
             // Criar o Service de sessões
             SessaoEstudoService service = new SessaoEstudoService(dao);
-
             // Criar o Service de relatórios
             RelatorioService relatorioService = new RelatorioService(dao);
-
             // Criar e iniciar o menu
-            MenuView menu = new MenuView(
-                    scanner,
-                    service,
-                    relatorioService
-            );
+            MenuView menu = new MenuView(leitor,service, relatorioService);
 
             menu.exibirMenu();
 
         } catch (Exception e) {
-            System.out.println("Erro ao executar o StudyTrack: "
-                    + e.getMessage());
+            System.out.println("Erro ao executar o StudyTrack: " + e.getMessage());
 
         } finally {
             // Fechar conexão com o RocksDB
             RocksDBUtil.desconectar();
 
-            scanner.close();
+            leitor.close();
         }
     }
 }
