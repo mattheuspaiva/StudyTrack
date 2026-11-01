@@ -23,13 +23,12 @@ public class MenuView {
         this.relatorioService = relatorioService;
     }
 
-    // Exibir o menu principal
     public void exibirMenu() {
 
         int opcao;
 
         do {
-            System.out.println("\n========== STUDYTRACK ==========");
+            System.out.println("\n============ STUDYTRACK =============");
             System.out.println("1 - Cadastrar sessão de estudo");
             System.out.println("2 - Atualizar sessão");
             System.out.println("3 - Excluir sessão");
@@ -91,7 +90,6 @@ public class MenuView {
         } while (opcao != 0);
     }
 
-    // Cadastrar sessão
     private void cadastrar() {
 
         try {
@@ -162,7 +160,7 @@ public class MenuView {
         }
     }
 
-    // Atualizar sessão
+
     private void atualizar() {
 
         try {
@@ -201,7 +199,7 @@ public class MenuView {
         }
     }
 
-    // Excluir sessão
+
     private void excluir() {
 
         try {
@@ -219,7 +217,6 @@ public class MenuView {
         }
     }
 
-    // Relatório de tempo estudado por disciplina
     private void relatorioTempoDisciplina() {
 
         try {
@@ -252,7 +249,6 @@ public class MenuView {
         }
     }
 
-    // Relatório de exercícios resolvidos
     private void relatorioExercicios() {
 
         try {
@@ -270,7 +266,6 @@ public class MenuView {
         }
     }
 
-    // Relatório de disciplinas estudadas por dia
     private void relatorioDisciplinasPorDia() {
 
         try {
@@ -284,7 +279,6 @@ public class MenuView {
         }
     }
 
-    // Ler números inteiros
     private int lerInteiro() {
 
         while (!scanner.hasNextInt()) {
