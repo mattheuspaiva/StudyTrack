@@ -14,13 +14,11 @@ public class RocksDBUtil {
     private static RocksDB banco;
     private static Options opcoes;
 
-    // Abrir conexão com o banco
     public static void conectar() {
 
         try {
             RocksDB.loadLibrary();
 
-            // Criar a pasta dados, caso não exista
             Files.createDirectories(Path.of("dados"));
 
             opcoes = new Options();
@@ -37,7 +35,6 @@ public class RocksDBUtil {
         }
     }
 
-    // Retornar conexão
     public static RocksDB getBanco() {
 
         if (banco == null) {
@@ -49,7 +46,6 @@ public class RocksDBUtil {
         return banco;
     }
 
-    // Fechar conexão
     public static void desconectar() {
 
         if (banco != null) {
@@ -62,6 +58,6 @@ public class RocksDBUtil {
             opcoes = null;
         }
 
-        System.out.println("Conexão com RocksDB encerrada!");
+        System.out.println("Conexão com RocksDB encerrada !");
     }
 }
