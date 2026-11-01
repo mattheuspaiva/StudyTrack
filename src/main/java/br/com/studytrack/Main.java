@@ -15,19 +15,14 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
 
         try {
-            // Conectar com o RocksDB
             RocksDBUtil.conectar();
 
-            // Criar o DAO
             SessaoEstudoDAO dao = new SessaoEstudoDAO();
 
-            // Criar o Service de sessões
             SessaoEstudoService service = new SessaoEstudoService(dao);
 
-            // Criar o Service de relatórios
             RelatorioService relatorioService = new RelatorioService(dao);
 
-            // Criar e iniciar o menu
             MenuView menu = new MenuView(
                     scanner,
                     service,
@@ -41,7 +36,6 @@ public class Main {
                     + e.getMessage());
 
         } finally {
-            // Fechar conexão com o RocksDB
             RocksDBUtil.desconectar();
 
             scanner.close();
