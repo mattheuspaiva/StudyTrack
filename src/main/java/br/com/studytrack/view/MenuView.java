@@ -1,11 +1,10 @@
-
 package br.com.studytrack.view;
 
 import br.com.studytrack.model.*;
 import br.com.studytrack.service.SessaoEstudoService;
+import br.com.studytrack.service.RelatorioService;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 
@@ -13,10 +12,15 @@ public class MenuView {
 
     private Scanner scanner;
     private SessaoEstudoService service;
+    private RelatorioService relatorioService;
 
-    public MenuView(Scanner scanner, SessaoEstudoService service) {
+    public MenuView(Scanner scanner,
+                    SessaoEstudoService service,
+                    RelatorioService relatorioService) {
+
         this.scanner = scanner;
         this.service = service;
+        this.relatorioService = relatorioService;
     }
 
     // Exibir o menu principal
@@ -27,34 +31,53 @@ public class MenuView {
         do {
             System.out.println("\n========== STUDYTRACK ==========");
             System.out.println("1 - Cadastrar sessão de estudo");
-            System.out.println("2 - Listar sessões de estudo");
-            System.out.println("3 - Buscar sessão por ID");
-            System.out.println("4 - Atualizar sessão");
-            System.out.println("5 - Excluir sessão");
+            System.out.println("2 - Atualizar sessão");
+            System.out.println("3 - Excluir sessão");
+
+            System.out.println("\n========== RELATÓRIOS ==========");
+            System.out.println("4 - Tempo estudado por disciplina");
+            System.out.println("5 - Exercícios resolvidos por disciplina");
+            System.out.println("6 - Disciplinas estudadas por dia");
+            System.out.println("7 - Disciplina mais estudada");
+            System.out.println("8 - Histórico de estudos");
+
             System.out.println("0 - Sair");
             System.out.print("Escolha uma opção: ");
 
             opcao = lerInteiro();
 
             switch (opcao) {
+
                 case 1:
                     cadastrar();
                     break;
 
                 case 2:
-                    listar();
-                    break;
-
-                case 3:
-                    buscar();
-                    break;
-
-                case 4:
                     atualizar();
                     break;
 
-                case 5:
+                case 3:
                     excluir();
+                    break;
+
+                case 4:
+                    relatorioTempoDisciplina();
+                    break;
+
+                case 5:
+                    relatorioExercicios();
+                    break;
+
+                case 6:
+                    relatorioDisciplinasPorDia();
+                    break;
+
+                case 7:
+                    relatorioService.disciplinaMaisEstudada();
+                    break;
+
+                case 8:
+                    relatorioService.exibirHistorico();
                     break;
 
                 case 0:
@@ -139,43 +162,6 @@ public class MenuView {
         }
     }
 
-    // Listar sessões
-    private void listar() {
-
-        List<SessaoEstudo> sessoes = service.listarTodos();
-
-        System.out.println("\n--- SESSÕES CADASTRADAS ---");
-
-        if (sessoes.isEmpty()) {
-            System.out.println("Nenhuma sessão cadastrada.");
-            return;
-        }
-
-        for (SessaoEstudo sessao : sessoes) {
-            mostrarSessao(sessao);
-        }
-    }
-
-    // Buscar sessão por ID
-    private void buscar() {
-
-        try {
-            System.out.print("\nDigite o ID da sessão: ");
-            int id = lerInteiro();
-
-            Optional<SessaoEstudo> resultado = service.buscarPorId(id);
-
-            if (resultado.isPresent()) {
-                mostrarSessao(resultado.get());
-            } else {
-                System.out.println("Sessão não encontrada.");
-            }
-
-        } catch (Exception e) {
-            System.out.println("Erro na busca: " + e.getMessage());
-        }
-    }
-
     // Atualizar sessão
     private void atualizar() {
 
@@ -233,24 +219,69 @@ public class MenuView {
         }
     }
 
-    // Mostrar os dados de uma sessão
-    private void mostrarSessao(SessaoEstudo sessao) {
+    // Relatório de tempo estudado por disciplina
+    private void relatorioTempoDisciplina() {
 
-        System.out.println("\n------------------------------");
-        System.out.println("ID: " + sessao.getId());
-        System.out.println("Estudante: " +
-                sessao.getEstudante().getNome());
-        System.out.println("Disciplina: " +
-                sessao.getDisciplina().getNome());
-        System.out.println("Conteúdo: " +
-                sessao.getConteudo().getNome());
-        System.out.println("Data: " + sessao.getData());
-        System.out.println("Duração: " +
-                sessao.getDuracaoMinutos() + " minutos");
-        System.out.println("Exercícios resolvidos: " +
-                sessao.getExerciciosResolvidos());
-        System.out.println("Status: " + sessao.getStatus());
-        System.out.println("------------------------------");
+        try {
+            System.out.print("\nNome da disciplina: ");
+            String disciplina = scanner.nextLine();
+
+            System.out.print("Data inicial (AAAA-MM-DD): ");
+            LocalDate inicio = LocalDate.parse(scanner.nextLine());
+
+            System.out.print("Data final (AAAA-MM-DD): ");
+            LocalDate fim = LocalDate.parse(scanner.nextLine());
+
+            if (fim.isBefore(inicio)) {
+                System.out.println("A data final não pode ser anterior à inicial.");
+                return;
+            }
+
+            int minutos = relatorioService.calcularTempoPorDisciplina(
+                    disciplina, inicio, fim
+            );
+
+            int horas = minutos / 60;
+            int restante = minutos % 60;
+
+            System.out.println("\nTempo estudado em " + disciplina + ": "
+                    + horas + "h " + restante + "min");
+
+        } catch (Exception e) {
+            System.out.println("Erro ao gerar relatório: " + e.getMessage());
+        }
+    }
+
+    // Relatório de exercícios resolvidos
+    private void relatorioExercicios() {
+
+        try {
+            System.out.print("\nNome da disciplina: ");
+            String disciplina = scanner.nextLine();
+
+            int total = relatorioService.calcularExerciciosPorDisciplina(
+                    disciplina
+            );
+
+            System.out.println("Total de exercícios resolvidos: " + total);
+
+        } catch (Exception e) {
+            System.out.println("Erro ao gerar relatório: " + e.getMessage());
+        }
+    }
+
+    // Relatório de disciplinas estudadas por dia
+    private void relatorioDisciplinasPorDia() {
+
+        try {
+            System.out.print("\nData (AAAA-MM-DD): ");
+            LocalDate data = LocalDate.parse(scanner.nextLine());
+
+            relatorioService.listarDisciplinasPorDia(data);
+
+        } catch (Exception e) {
+            System.out.println("Erro ao gerar relatório: " + e.getMessage());
+        }
     }
 
     // Ler números inteiros

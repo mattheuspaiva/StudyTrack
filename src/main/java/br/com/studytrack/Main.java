@@ -2,6 +2,7 @@ package br.com.studytrack;
 
 import br.com.studytrack.dao.SessaoEstudoDAO;
 import br.com.studytrack.service.SessaoEstudoService;
+import br.com.studytrack.service.RelatorioService;
 import br.com.studytrack.util.RocksDBUtil;
 import br.com.studytrack.view.MenuView;
 
@@ -20,11 +21,18 @@ public class Main {
             // Criar o DAO
             SessaoEstudoDAO dao = new SessaoEstudoDAO();
 
-            // Criar o Service
+            // Criar o Service de sessões
             SessaoEstudoService service = new SessaoEstudoService(dao);
 
+            // Criar o Service de relatórios
+            RelatorioService relatorioService = new RelatorioService(dao);
+
             // Criar e iniciar o menu
-            MenuView menu = new MenuView(scanner, service);
+            MenuView menu = new MenuView(
+                    scanner,
+                    service,
+                    relatorioService
+            );
 
             menu.exibirMenu();
 
