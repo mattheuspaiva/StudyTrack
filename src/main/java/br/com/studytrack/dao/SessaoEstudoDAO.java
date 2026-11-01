@@ -27,7 +27,6 @@ public class SessaoEstudoDAO {
         this.banco = RocksDBUtil.getBanco();
     }
 
-    // Cadastrar sessão de estudo
     public void cadastrar(SessaoEstudo sessao) {
 
         try {
@@ -44,7 +43,6 @@ public class SessaoEstudoDAO {
         }
     }
 
-    // Listar todas as sessões
     public List<SessaoEstudo> listarTodos() {
 
         List<SessaoEstudo> sessoes = new ArrayList<>();
@@ -82,7 +80,6 @@ public class SessaoEstudoDAO {
         return sessoes;
     }
 
-    // Buscar sessão pelo ID
     public Optional<SessaoEstudo> buscarPorId(int id) {
 
         try {
@@ -104,7 +101,6 @@ public class SessaoEstudoDAO {
         return Optional.empty();
     }
 
-    // Atualizar sessão
     public boolean atualizar(SessaoEstudo sessao) {
 
         try {
@@ -129,7 +125,6 @@ public class SessaoEstudoDAO {
         }
     }
 
-    // Excluir sessão
     public boolean excluir(int id) {
 
         try {
@@ -152,7 +147,6 @@ public class SessaoEstudoDAO {
         }
     }
 
-    // Converter objeto Java para bytes
     private byte[] converterParaBytes(SessaoEstudo sessao) throws IOException {
 
         ByteArrayOutputStream saida = new ByteArrayOutputStream();
@@ -183,7 +177,6 @@ public class SessaoEstudoDAO {
         return saida.toByteArray();
     }
 
-    // Converter bytes para objeto Java
     private SessaoEstudo converterParaObjeto(byte[] valor) throws IOException {
 
         ByteArrayInputStream entrada = new ByteArrayInputStream(valor);
