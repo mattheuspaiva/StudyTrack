@@ -14,7 +14,7 @@ public class RelatorioService {
         this.dao = dao;
     }
 
-    // Calcular o tempo estudado em uma disciplina durante uma semana
+
     public int calcularTempoPorDisciplina(
             String nomeDisciplina,
             LocalDate inicio,
@@ -41,7 +41,7 @@ public class RelatorioService {
         return totalMinutos;
     }
 
-    // Calcular a quantidade de exercícios resolvidos em uma disciplina
+
     public int calcularExerciciosPorDisciplina(String nomeDisciplina) {
 
         List<SessaoEstudo> sessoes = dao.listarTodos();
@@ -61,7 +61,7 @@ public class RelatorioService {
         return totalExercicios;
     }
 
-    // Listar as disciplinas estudadas em um determinado dia
+
     public void listarDisciplinasPorDia(LocalDate data) {
 
         List<SessaoEstudo> sessoes = dao.listarTodos();
@@ -87,7 +87,7 @@ public class RelatorioService {
         }
     }
 
-    // Identificar a disciplina com maior tempo de estudo
+
     public void disciplinaMaisEstudada() {
 
         List<SessaoEstudo> sessoes = dao.listarTodos();
@@ -126,7 +126,7 @@ public class RelatorioService {
         }
     }
 
-    // Exibir o histórico de estudos
+
     public void exibirHistorico() {
 
         List<SessaoEstudo> sessoes = dao.listarTodos();
