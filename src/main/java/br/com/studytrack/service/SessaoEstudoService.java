@@ -14,7 +14,7 @@ public class SessaoEstudoService {
         this.dao = dao;
     }
 
-    // Cadastrar uma sessão de estudo
+
     public void cadastrar(SessaoEstudo sessao) {
 
         if (sessao == null) {
@@ -82,7 +82,7 @@ public class SessaoEstudoService {
         dao.cadastrar(sessao);
     }
 
-    // Listar todas as sessões
+
     public List<SessaoEstudo> listarTodos() {
         return dao.listarTodos();
     }
@@ -99,7 +99,7 @@ public class SessaoEstudoService {
         return dao.buscarPorId(id);
     }
 
-    // Atualizar uma sessão
+
     public boolean atualizar(SessaoEstudo sessao) {
 
         if (sessao == null) {
@@ -143,7 +143,7 @@ public class SessaoEstudoService {
         return dao.atualizar(sessao);
     }
 
-    // Excluir uma sessão
+
     public boolean excluir(int id) {
 
         if (id <= 0) {
