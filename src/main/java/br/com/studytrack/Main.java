@@ -2,25 +2,23 @@ package br.com.studytrack;
 
 import br.com.studytrack.dao.SessaoEstudoDAO;
 import br.com.studytrack.service.SessaoEstudoService;
-import br.com.studytrack.util.Neo4jConfig;
+import br.com.studytrack.util.RocksDBUtil;
 import br.com.studytrack.view.MenuView;
 
 import java.util.Scanner;
 
 public class Main {
+
     public static void main(String[] args) {
 
-        Neo4jConfig conexao = new Neo4jConfig();
         Scanner scanner = new Scanner(System.in);
 
         try {
-            // Testar conexão com o Neo4j
-            conexao.testarConexao();
+            // Conectar com o RocksDB
+            RocksDBUtil.conectar();
 
             // Criar o DAO
-            SessaoEstudoDAO dao = new SessaoEstudoDAO(
-                    conexao.getDriver()
-            );
+            SessaoEstudoDAO dao = new SessaoEstudoDAO();
 
             // Criar o Service
             SessaoEstudoService service = new SessaoEstudoService(dao);
@@ -35,8 +33,9 @@ public class Main {
                     + e.getMessage());
 
         } finally {
-            // Fechar conexão com o Neo4j
-            conexao.fecharConexao();
+            // Fechar conexão com o RocksDB
+            RocksDBUtil.desconectar();
+
             scanner.close();
         }
     }
