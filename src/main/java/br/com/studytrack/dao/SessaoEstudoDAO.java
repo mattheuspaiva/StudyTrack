@@ -11,21 +11,55 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
 public class SessaoEstudoDAO {
 
-    public void cadastrar(SessaoEstudo sessao) {
+    public int cadastrar(SessaoEstudo sessao) {
+
+        Jedis banco = MemuraiUtil.getJedis();
 
         try {
-            Jedis banco = MemuraiUtil.getJedis();
+            Estudante estudante = buscarOuCriarEstudante(
+                    sessao.getEstudante().getNome(), banco
+            );
 
-            String chave = "sessao:" + sessao.getId();
+            Disciplina disciplina = buscarOuCriarDisciplina(
+                    sessao.getDisciplina().getNome(), banco
+            );
+
+            Conteudo conteudo = buscarOuCriarConteudo(
+                    sessao.getConteudo().getNome(),
+                    disciplina.getId(),
+                    banco
+            );
+
+            sessao.setEstudante(estudante);
+            sessao.setDisciplina(disciplina);
+            sessao.setConteudo(conteudo);
+
+            int maiorId = obterMaiorIdSessao(banco);
+
+            String contador = "studytrack:sessao:contador";
+            String valorAtual = banco.get(contador);
+
+            if (valorAtual == null || Long.parseLong(valorAtual) < maiorId) {
+                banco.set(contador, String.valueOf(maiorId));
+            }
+
+            int id = Math.toIntExact(banco.incr(contador));
+
+            sessao.setId(id);
+
+            String chave = "sessao:" + id;
 
             byte[] valor = converterParaBytes(sessao);
 
@@ -33,61 +67,184 @@ public class SessaoEstudoDAO {
 
             banco.set(chave, valorTexto);
 
-            System.out.println("Sessão cadastrada com sucesso!");
+            return id;
 
         } catch (IOException e) {
             throw new RuntimeException("Erro ao cadastrar sessão: " + e.getMessage(), e);
         }
     }
 
+    private Estudante buscarOuCriarEstudante(String nome, Jedis banco) {
+
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("O nome do estudante é obrigatório.");
+        }
+
+        nome = nome.trim();
+
+        String nomeNormalizado = nome.toLowerCase(Locale.ROOT);
+
+        String nomeCodificado = Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(nomeNormalizado.getBytes(StandardCharsets.UTF_8));
+
+        String chaveNome = "estudante:nome:" + nomeCodificado;
+
+        String idExistente = banco.get(chaveNome);
+
+        if (idExistente != null) {
+            return new Estudante(Integer.parseInt(idExistente), nome);
+        }
+
+        int id = Math.toIntExact(banco.incr("studytrack:estudante:contador"));
+
+        banco.set("estudante:" + id, nome);
+        banco.set(chaveNome, String.valueOf(id));
+
+        return new Estudante(id, nome);
+    }
+
+    private Disciplina buscarOuCriarDisciplina(String nome, Jedis banco) {
+
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("O nome da disciplina é obrigatório.");
+        }
+
+        nome = nome.trim();
+
+        String nomeNormalizado = nome.toLowerCase(Locale.ROOT);
+
+        String nomeCodificado = Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(nomeNormalizado.getBytes(StandardCharsets.UTF_8));
+
+        String chaveNome = "disciplina:nome:" + nomeCodificado;
+
+        String idExistente = banco.get(chaveNome);
+
+        if (idExistente != null) {
+            return new Disciplina(Integer.parseInt(idExistente), nome);
+        }
+
+        int id = Math.toIntExact(banco.incr("studytrack:disciplina:contador"));
+
+        banco.set("disciplina:" + id, nome);
+        banco.set(chaveNome, String.valueOf(id));
+
+        return new Disciplina(id, nome);
+    }
+
+    private Conteudo buscarOuCriarConteudo(String nome, int disciplinaId, Jedis banco) {
+
+        if (nome == null || nome.isBlank()) {
+            throw new IllegalArgumentException("O nome do conteúdo é obrigatório.");
+        }
+
+        if (disciplinaId <= 0) {
+            throw new IllegalArgumentException("O ID da disciplina é inválido.");
+        }
+
+        nome = nome.trim();
+
+        String nomeNormalizado = nome.toLowerCase(Locale.ROOT);
+
+        String identificador = disciplinaId + ":" + nomeNormalizado;
+
+        String nomeCodificado = Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(identificador.getBytes(StandardCharsets.UTF_8));
+
+        String chaveNome = "conteudo:nome:" + nomeCodificado;
+
+        String idExistente = banco.get(chaveNome);
+
+        if (idExistente != null) {
+            return new Conteudo(Integer.parseInt(idExistente), nome);
+        }
+
+        int id = Math.toIntExact(banco.incr("studytrack:conteudo:contador"));
+
+        banco.set("conteudo:" + id, nome);
+        banco.set("conteudo:" + id + ":disciplina", String.valueOf(disciplinaId));
+        banco.set(chaveNome, String.valueOf(id));
+
+        return new Conteudo(id, nome);
+    }
+
+    private int obterMaiorIdSessao(Jedis banco) {
+
+        int maiorId = 0;
+
+        Set<String> chaves = banco.keys("sessao:*");
+
+        for (String chave : chaves) {
+
+            try {
+                int id = Integer.parseInt(
+                        chave.substring("sessao:".length())
+                );
+
+                if (id > maiorId) {
+                    maiorId = id;
+                }
+
+            } catch (NumberFormatException e) {
+            }
+        }
+
+        return maiorId;
+    }
+
     public List<SessaoEstudo> listarTodos() {
 
-        List<SessaoEstudo> sessoes = new ArrayList<>();
-
         Jedis banco = MemuraiUtil.getJedis();
+
+        List<SessaoEstudo> sessoes = new ArrayList<>();
 
         Set<String> chaves = banco.keys("sessao:*");
 
         try {
             for (String chave : chaves) {
 
-                String valorTexto = banco.get(chave);
+                try {
+                    Integer.parseInt(chave.substring("sessao:".length()));
 
-                if (valorTexto != null) {
+                    String valorTexto = banco.get(chave);
 
-                    byte[] valor = Base64.getDecoder().decode(valorTexto);
+                    if (valorTexto != null) {
+                        byte[] valor = Base64.getDecoder().decode(valorTexto);
 
-                    SessaoEstudo sessao = converterParaObjeto(valor);
+                        sessoes.add(converterParaObjeto(valor));
+                    }
 
-                    sessoes.add(sessao);
+                } catch (NumberFormatException e) {
                 }
             }
+
+            sessoes.sort(
+                    Comparator.comparing(SessaoEstudo::getData)
+                            .thenComparingInt(SessaoEstudo::getId)
+                            .reversed()
+            );
+
+            return sessoes;
 
         } catch (IOException e) {
             throw new RuntimeException("Erro ao listar sessões: " + e.getMessage(), e);
         }
-
-        sessoes.sort((a, b) -> b.getData().compareTo(a.getData()));
-
-        return sessoes;
     }
 
     public Optional<SessaoEstudo> buscarPorId(int id) {
 
+        Jedis banco = MemuraiUtil.getJedis();
+
         try {
-            Jedis banco = MemuraiUtil.getJedis();
-
-            String chave = "sessao:" + id;
-
-            String valorTexto = banco.get(chave);
+            String valorTexto = banco.get("sessao:" + id);
 
             if (valorTexto != null) {
-
                 byte[] valor = Base64.getDecoder().decode(valorTexto);
 
-                SessaoEstudo sessao = converterParaObjeto(valor);
-
-                return Optional.of(sessao);
+                return Optional.of(converterParaObjeto(valor));
             }
 
         } catch (IOException e) {
@@ -99,22 +256,20 @@ public class SessaoEstudoDAO {
 
     public boolean atualizar(SessaoEstudo sessao) {
 
-        try {
-            Jedis banco = MemuraiUtil.getJedis();
+        Jedis banco = MemuraiUtil.getJedis();
 
+        try {
             String chave = "sessao:" + sessao.getId();
 
-            String valorAtual = banco.get(chave);
-
-            if (valorAtual == null) {
+            if (!banco.exists(chave)) {
                 return false;
             }
 
-            byte[] novoValor = converterParaBytes(sessao);
+            byte[] valor = converterParaBytes(sessao);
 
-            String novoValorTexto = Base64.getEncoder().encodeToString(novoValor);
+            String valorTexto = Base64.getEncoder().encodeToString(valor);
 
-            banco.set(chave, novoValorTexto);
+            banco.set(chave, valorTexto);
 
             return true;
 
@@ -127,9 +282,7 @@ public class SessaoEstudoDAO {
 
         Jedis banco = MemuraiUtil.getJedis();
 
-        String chave = "sessao:" + id;
-
-        long resultado = banco.del(chave);
+        long resultado = banco.del("sessao:" + id);
 
         return resultado > 0;
     }
@@ -137,7 +290,6 @@ public class SessaoEstudoDAO {
     private byte[] converterParaBytes(SessaoEstudo sessao) throws IOException {
 
         ByteArrayOutputStream saida = new ByteArrayOutputStream();
-
         DataOutputStream dados = new DataOutputStream(saida);
 
         dados.writeInt(sessao.getId());
@@ -154,7 +306,6 @@ public class SessaoEstudoDAO {
         dados.writeUTF(sessao.getData().toString());
 
         dados.writeInt(sessao.getDuracaoMinutos());
-
         dados.writeInt(sessao.getExerciciosResolvidos());
 
         dados.writeUTF(sessao.getStatus());
@@ -167,31 +318,37 @@ public class SessaoEstudoDAO {
     private SessaoEstudo converterParaObjeto(byte[] valor) throws IOException {
 
         ByteArrayInputStream entrada = new ByteArrayInputStream(valor);
-
         DataInputStream dados = new DataInputStream(entrada);
 
         int id = dados.readInt();
 
-        Estudante estudante = new Estudante(dados.readInt(), dados.readUTF()
+        Estudante estudante = new Estudante(
+                dados.readInt(),
+                dados.readUTF()
         );
 
-        Disciplina disciplina = new Disciplina(dados.readInt(), dados.readUTF()
+        Disciplina disciplina = new Disciplina(
+                dados.readInt(),
+                dados.readUTF()
         );
 
-        Conteudo conteudo = new Conteudo(dados.readInt(), dados.readUTF()
+        Conteudo conteudo = new Conteudo(
+                dados.readInt(),
+                dados.readUTF()
         );
 
         LocalDate data = LocalDate.parse(dados.readUTF());
 
         int duracao = dados.readInt();
-
         int exercicios = dados.readInt();
 
         String status = dados.readUTF();
 
         dados.close();
 
-        return new SessaoEstudo(id,estudante,disciplina,conteudo,data,duracao,exercicios, status
+        return new SessaoEstudo(
+                id, estudante, disciplina, conteudo,
+                data, duracao, exercicios, status
         );
     }
 }

@@ -14,142 +14,93 @@ public class SessaoEstudoService {
         this.dao = dao;
     }
 
-
-    public void cadastrar(SessaoEstudo sessao) {
+    public int cadastrar(SessaoEstudo sessao) {
 
         if (sessao == null) {
-            throw new IllegalArgumentException(
-                    "A sessão não pode ser nula."
-            );
+            throw new IllegalArgumentException("A sessão não pode ser nula.");
         }
 
-        if (sessao.getId() <= 0) {
-            throw new IllegalArgumentException(
-                    "O ID da sessão deve ser maior que zero."
-            );
+        if (sessao.getEstudante() == null || sessao.getDisciplina() == null || sessao.getConteudo() == null) {
+            throw new IllegalArgumentException("Estudante, disciplina e conteúdo são obrigatórios.");
         }
 
-        if (dao.buscarPorId(sessao.getId()).isPresent()) {
-            throw new IllegalArgumentException(
-                    "Já existe uma sessão com esse ID."
-            );
+        if (sessao.getEstudante().getNome() == null || sessao.getEstudante().getNome().isBlank()) {
+            throw new IllegalArgumentException("O nome do estudante é obrigatório.");
         }
 
-        if (sessao.getEstudante() == null ||
-                sessao.getDisciplina() == null ||
-                sessao.getConteudo() == null) {
-
-            throw new IllegalArgumentException(
-                    "Estudante, disciplina e conteúdo são obrigatórios."
-            );
+        if (sessao.getDisciplina().getNome() == null || sessao.getDisciplina().getNome().isBlank()) {
+            throw new IllegalArgumentException("O nome da disciplina é obrigatório.");
         }
 
-        if (sessao.getEstudante().getId() <= 0 ||
-                sessao.getDisciplina().getId() <= 0 ||
-                sessao.getConteudo().getId() <= 0) {
-
-            throw new IllegalArgumentException(
-                    "Os IDs dos dados relacionados devem ser maiores que zero."
-            );
+        if (sessao.getConteudo().getNome() == null || sessao.getConteudo().getNome().isBlank()) {
+            throw new IllegalArgumentException("O nome do conteúdo é obrigatório.");
         }
 
         if (sessao.getData() == null) {
-            throw new IllegalArgumentException(
-                    "A data da sessão é obrigatória."
-            );
+            throw new IllegalArgumentException("A data da sessão é obrigatória.");
         }
 
         if (sessao.getDuracaoMinutos() <= 0) {
-            throw new IllegalArgumentException(
-                    "A duração deve ser maior que zero."
-            );
+            throw new IllegalArgumentException("A duração deve ser maior que zero.");
         }
 
         if (sessao.getExerciciosResolvidos() < 0) {
-            throw new IllegalArgumentException(
-                    "A quantidade de exercícios não pode ser negativa."
-            );
+            throw new IllegalArgumentException("A quantidade de exercícios não pode ser negativa.");
         }
 
-        if (sessao.getStatus() == null ||
-                sessao.getStatus().isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "O status da sessão é obrigatório."
-            );
+        if (sessao.getStatus() == null || sessao.getStatus().isBlank()) {
+            throw new IllegalArgumentException("O status da sessão é obrigatório.");
         }
 
-        dao.cadastrar(sessao);
+        return dao.cadastrar(sessao);
     }
-
 
     public List<SessaoEstudo> listarTodos() {
         return dao.listarTodos();
     }
 
-    // Buscar sessão pelo ID
     public Optional<SessaoEstudo> buscarPorId(int id) {
 
         if (id <= 0) {
-            throw new IllegalArgumentException(
-                    "O ID deve ser maior que zero."
-            );
+            throw new IllegalArgumentException("O ID deve ser maior que zero.");
         }
 
         return dao.buscarPorId(id);
     }
 
-
     public boolean atualizar(SessaoEstudo sessao) {
 
         if (sessao == null) {
-            throw new IllegalArgumentException(
-                    "A sessão não pode ser nula."
-            );
+            throw new IllegalArgumentException("A sessão não pode ser nula.");
         }
 
         if (sessao.getId() <= 0) {
-            throw new IllegalArgumentException(
-                    "O ID deve ser maior que zero."
-            );
+            throw new IllegalArgumentException("O ID deve ser maior que zero.");
         }
 
         if (sessao.getData() == null) {
-            throw new IllegalArgumentException(
-                    "A data da sessão é obrigatória."
-            );
+            throw new IllegalArgumentException("A data da sessão é obrigatória.");
         }
 
         if (sessao.getDuracaoMinutos() <= 0) {
-            throw new IllegalArgumentException(
-                    "A duração deve ser maior que zero."
-            );
+            throw new IllegalArgumentException("A duração deve ser maior que zero.");
         }
 
         if (sessao.getExerciciosResolvidos() < 0) {
-            throw new IllegalArgumentException(
-                    "A quantidade de exercícios não pode ser negativa."
-            );
+            throw new IllegalArgumentException("A quantidade de exercícios não pode ser negativa.");
         }
 
-        if (sessao.getStatus() == null ||
-                sessao.getStatus().isBlank()) {
-
-            throw new IllegalArgumentException(
-                    "O status da sessão é obrigatório."
-            );
+        if (sessao.getStatus() == null || sessao.getStatus().isBlank()) {
+            throw new IllegalArgumentException("O status da sessão é obrigatório.");
         }
 
         return dao.atualizar(sessao);
     }
 
-
     public boolean excluir(int id) {
 
         if (id <= 0) {
-            throw new IllegalArgumentException(
-                    "O ID deve ser maior que zero."
-            );
+            throw new IllegalArgumentException("O ID deve ser maior que zero.");
         }
 
         return dao.excluir(id);
