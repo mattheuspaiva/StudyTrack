@@ -10,15 +10,13 @@ import java.util.Scanner;
 
 public class MenuView {
 
-    private Scanner scanner;
+    private Scanner leitor;
     private SessaoEstudoService service;
     private RelatorioService relatorioService;
 
-    public MenuView(Scanner scanner,
-                    SessaoEstudoService service,
-                    RelatorioService relatorioService) {
+    public MenuView(Scanner leitor, SessaoEstudoService service, RelatorioService relatorioService) {
 
-        this.scanner = scanner;
+        this.leitor = leitor;
         this.service = service;
         this.relatorioService = relatorioService;
     }
@@ -36,9 +34,8 @@ public class MenuView {
             System.out.println("\n========== RELATÓRIOS ==========");
             System.out.println("4 - Tempo estudado por disciplina");
             System.out.println("5 - Exercícios resolvidos por disciplina");
-            System.out.println("6 - Disciplinas estudadas por dia");
-            System.out.println("7 - Disciplina mais estudada");
-            System.out.println("8 - Histórico de estudos");
+            System.out.println("6 - Disciplina mais estudada");
+            System.out.println("7 - Histórico de estudos");
 
             System.out.println("0 - Sair");
             System.out.print("Escolha uma opção: ");
@@ -68,14 +65,10 @@ public class MenuView {
                     break;
 
                 case 6:
-                    relatorioDisciplinasPorDia();
-                    break;
-
-                case 7:
                     relatorioService.disciplinaMaisEstudada();
                     break;
 
-                case 8:
+                case 7:
                     relatorioService.exibirHistorico();
                     break;
 
@@ -95,29 +88,16 @@ public class MenuView {
         try {
             System.out.println("\n--- CADASTRAR SESSÃO ---");
 
-            System.out.print("ID da sessão: ");
-            int id = lerInteiro();
-
-            System.out.print("ID do estudante: ");
-            int estudanteId = lerInteiro();
-
             System.out.print("Nome do estudante: ");
-            String estudanteNome = scanner.nextLine();
+            String estudanteNome = leitor.nextLine();
 
-            System.out.print("ID da disciplina: ");
-            int disciplinaId = lerInteiro();
+            System.out.print("Disciplina: ");
+            String disciplinaNome = leitor.nextLine();
 
-            System.out.print("Nome da disciplina: ");
-            String disciplinaNome = scanner.nextLine();
+            System.out.print("Conteúdo: ");
+            String conteudoNome = leitor.nextLine();
 
-            System.out.print("ID do conteúdo: ");
-            int conteudoId = lerInteiro();
-
-            System.out.print("Nome do conteúdo: ");
-            String conteudoNome = scanner.nextLine();
-
-            System.out.print("Data (AAAA-MM-DD): ");
-            LocalDate data = LocalDate.parse(scanner.nextLine());
+            LocalDate data = LocalDate.now();
 
             System.out.print("Duração em minutos: ");
             int duracao = lerInteiro();
@@ -126,40 +106,23 @@ public class MenuView {
             int exercicios = lerInteiro();
 
             System.out.print("Status: ");
-            String status = scanner.nextLine();
+            String status = leitor.nextLine();
 
-            Estudante estudante = new Estudante(
-                    estudanteId, estudanteNome
-            );
+            Estudante estudante = new Estudante(0, estudanteNome);
+            Disciplina disciplina = new Disciplina(0, disciplinaNome);
+            Conteudo conteudo = new Conteudo(0, conteudoNome);
 
-            Disciplina disciplina = new Disciplina(
-                    disciplinaId, disciplinaNome
-            );
+            SessaoEstudo sessao = new SessaoEstudo(0,estudante,disciplina,conteudo,data,duracao,exercicios,status);
 
-            Conteudo conteudo = new Conteudo(
-                    conteudoId, conteudoNome
-            );
+            int idGerado = service.cadastrar(sessao);
 
-            SessaoEstudo sessao = new SessaoEstudo(
-                    id,
-                    estudante,
-                    disciplina,
-                    conteudo,
-                    data,
-                    duracao,
-                    exercicios,
-                    status
-            );
-
-            service.cadastrar(sessao);
-
-            System.out.println("Cadastro realizado!");
+            System.out.println("\nSessão cadastrada com sucesso!");
+            System.out.println("ID gerado: " + idGerado);
 
         } catch (Exception e) {
             System.out.println("Erro ao cadastrar: " + e.getMessage());
         }
     }
-
 
     private void atualizar() {
 
@@ -176,8 +139,7 @@ public class MenuView {
 
             SessaoEstudo sessao = resultado.get();
 
-            System.out.print("Nova data (AAAA-MM-DD): ");
-            sessao.setData(LocalDate.parse(scanner.nextLine()));
+            sessao.setData(LocalDate.now());
 
             System.out.print("Nova duração em minutos: ");
             sessao.setDuracaoMinutos(lerInteiro());
@@ -186,7 +148,7 @@ public class MenuView {
             sessao.setExerciciosResolvidos(lerInteiro());
 
             System.out.print("Novo status: ");
-            sessao.setStatus(scanner.nextLine());
+            sessao.setStatus(leitor.nextLine());
 
             if (service.atualizar(sessao)) {
                 System.out.println("Sessão atualizada com sucesso!");
@@ -198,7 +160,6 @@ public class MenuView {
             System.out.println("Erro ao atualizar: " + e.getMessage());
         }
     }
-
 
     private void excluir() {
 
@@ -221,13 +182,13 @@ public class MenuView {
 
         try {
             System.out.print("\nNome da disciplina: ");
-            String disciplina = scanner.nextLine();
+            String disciplina = leitor.nextLine();
 
             System.out.print("Data inicial (AAAA-MM-DD): ");
-            LocalDate inicio = LocalDate.parse(scanner.nextLine());
+            LocalDate inicio = LocalDate.parse(leitor.nextLine());
 
             System.out.print("Data final (AAAA-MM-DD): ");
-            LocalDate fim = LocalDate.parse(scanner.nextLine());
+            LocalDate fim = LocalDate.parse(leitor.nextLine());
 
             if (fim.isBefore(inicio)) {
                 System.out.println("A data final não pode ser anterior à inicial.");
@@ -253,7 +214,7 @@ public class MenuView {
 
         try {
             System.out.print("\nNome da disciplina: ");
-            String disciplina = scanner.nextLine();
+            String disciplina = leitor.nextLine();
 
             int total = relatorioService.calcularExerciciosPorDisciplina(
                     disciplina
@@ -266,28 +227,15 @@ public class MenuView {
         }
     }
 
-    private void relatorioDisciplinasPorDia() {
-
-        try {
-            System.out.print("\nData (AAAA-MM-DD): ");
-            LocalDate data = LocalDate.parse(scanner.nextLine());
-
-            relatorioService.listarDisciplinasPorDia(data);
-
-        } catch (Exception e) {
-            System.out.println("Erro ao gerar relatório: " + e.getMessage());
-        }
-    }
-
     private int lerInteiro() {
 
-        while (!scanner.hasNextInt()) {
+        while (!leitor.hasNextInt()) {
             System.out.print("Digite um número inteiro válido: ");
-            scanner.nextLine();
+            leitor.nextLine();
         }
 
-        int numero = scanner.nextInt();
-        scanner.nextLine();
+        int numero = leitor.nextInt();
+        leitor.nextLine();
 
         return numero;
     }
