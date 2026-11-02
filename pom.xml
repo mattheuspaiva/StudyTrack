@@ -17,12 +17,12 @@
 
     <dependencies>
 
-        <!-- Biblioteca para utilizar o RocksDB -->
         <dependency>
-            <groupId>org.rocksdb</groupId>
-            <artifactId>rocksdbjni</artifactId>
-            <version>10.2.1</version>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>8.0.2</version>
         </dependency>
+
 
     </dependencies>
 
