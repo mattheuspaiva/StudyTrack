@@ -28,19 +28,11 @@ public class SessaoEstudoDAO {
         Jedis banco = MemuraiUtil.getJedis();
 
         try {
-            Estudante estudante = buscarOuCriarEstudante(
-                    sessao.getEstudante().getNome(), banco
-            );
+            Estudante estudante = buscarOuCriarEstudante(sessao.getEstudante().getNome(), banco);
 
-            Disciplina disciplina = buscarOuCriarDisciplina(
-                    sessao.getDisciplina().getNome(), banco
-            );
+            Disciplina disciplina = buscarOuCriarDisciplina(sessao.getDisciplina().getNome(), banco);
 
-            Conteudo conteudo = buscarOuCriarConteudo(
-                    sessao.getConteudo().getNome(),
-                    disciplina.getId(),
-                    banco
-            );
+            Conteudo conteudo = buscarOuCriarConteudo(sessao.getConteudo().getNome(), disciplina.getId(), banco);
 
             sessao.setEstudante(estudante);
             sessao.setDisciplina(disciplina);
@@ -84,9 +76,7 @@ public class SessaoEstudoDAO {
 
         String nomeNormalizado = nome.toLowerCase(Locale.ROOT);
 
-        String nomeCodificado = Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(nomeNormalizado.getBytes(StandardCharsets.UTF_8));
+        String nomeCodificado = Base64.getUrlEncoder().withoutPadding().encodeToString(nomeNormalizado.getBytes(StandardCharsets.UTF_8));
 
         String chaveNome = "estudante:nome:" + nomeCodificado;
 
@@ -114,9 +104,7 @@ public class SessaoEstudoDAO {
 
         String nomeNormalizado = nome.toLowerCase(Locale.ROOT);
 
-        String nomeCodificado = Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(nomeNormalizado.getBytes(StandardCharsets.UTF_8));
+        String nomeCodificado = Base64.getUrlEncoder().withoutPadding().encodeToString(nomeNormalizado.getBytes(StandardCharsets.UTF_8));
 
         String chaveNome = "disciplina:nome:" + nomeCodificado;
 
@@ -150,9 +138,7 @@ public class SessaoEstudoDAO {
 
         String identificador = disciplinaId + ":" + nomeNormalizado;
 
-        String nomeCodificado = Base64.getUrlEncoder()
-                .withoutPadding()
-                .encodeToString(identificador.getBytes(StandardCharsets.UTF_8));
+        String nomeCodificado = Base64.getUrlEncoder().withoutPadding().encodeToString(identificador.getBytes(StandardCharsets.UTF_8));
 
         String chaveNome = "conteudo:nome:" + nomeCodificado;
 
@@ -221,11 +207,7 @@ public class SessaoEstudoDAO {
                 }
             }
 
-            sessoes.sort(
-                    Comparator.comparing(SessaoEstudo::getData)
-                            .thenComparingInt(SessaoEstudo::getId)
-                            .reversed()
-            );
+            sessoes.sort(Comparator.comparing(SessaoEstudo::getData).thenComparingInt(SessaoEstudo::getId).reversed());
 
             return sessoes;
 
@@ -322,20 +304,11 @@ public class SessaoEstudoDAO {
 
         int id = dados.readInt();
 
-        Estudante estudante = new Estudante(
-                dados.readInt(),
-                dados.readUTF()
-        );
+        Estudante estudante = new Estudante(dados.readInt(), dados.readUTF());
 
-        Disciplina disciplina = new Disciplina(
-                dados.readInt(),
-                dados.readUTF()
-        );
+        Disciplina disciplina = new Disciplina(dados.readInt(), dados.readUTF());
 
-        Conteudo conteudo = new Conteudo(
-                dados.readInt(),
-                dados.readUTF()
-        );
+        Conteudo conteudo = new Conteudo(dados.readInt(), dados.readUTF());
 
         LocalDate data = LocalDate.parse(dados.readUTF());
 
@@ -346,9 +319,6 @@ public class SessaoEstudoDAO {
 
         dados.close();
 
-        return new SessaoEstudo(
-                id, estudante, disciplina, conteudo,
-                data, duracao, exercicios, status
-        );
+        return new SessaoEstudo(id, estudante, disciplina, conteudo, data, duracao, exercicios, status);
     }
 }
