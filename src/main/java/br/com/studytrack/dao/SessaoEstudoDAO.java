@@ -1,11 +1,9 @@
 package br.com.studytrack.dao;
 
 import br.com.studytrack.model.*;
-import br.com.studytrack.util.RocksDBUtil;
+import br.com.studytrack.util.MemuraiUtil;
 
-import org.rocksdb.RocksDB;
-import org.rocksdb.RocksIterator;
-import org.rocksdb.RocksDBException;
+import redis.clients.jedis.Jedis;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -13,32 +11,31 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class SessaoEstudoDAO {
-
-    private RocksDB banco;
-
-    public SessaoEstudoDAO() {
-        this.banco = RocksDBUtil.getBanco();
-    }
 
     public void cadastrar(SessaoEstudo sessao) {
 
         try {
+            Jedis banco = MemuraiUtil.getJedis();
+
             String chave = "sessao:" + sessao.getId();
 
             byte[] valor = converterParaBytes(sessao);
 
-            banco.put(chave.getBytes(StandardCharsets.UTF_8), valor);
+            String valorTexto = Base64.getEncoder().encodeToString(valor);
+
+            banco.set(chave, valorTexto);
 
             System.out.println("Sessão cadastrada com sucesso!");
 
-        } catch (RocksDBException | IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Erro ao cadastrar sessão: " + e.getMessage(), e);
         }
     }
@@ -47,32 +44,27 @@ public class SessaoEstudoDAO {
 
         List<SessaoEstudo> sessoes = new ArrayList<>();
 
-        RocksIterator iterator = banco.newIterator();
+        Jedis banco = MemuraiUtil.getJedis();
+
+        Set<String> chaves = banco.keys("sessao:*");
 
         try {
-            iterator.seekToFirst();
+            for (String chave : chaves) {
 
-            while (iterator.isValid()) {
+                String valorTexto = banco.get(chave);
 
-                String chave = new String(
-                        iterator.key(), StandardCharsets.UTF_8
-                );
+                if (valorTexto != null) {
 
-                if (chave.startsWith("sessao:")) {
+                    byte[] valor = Base64.getDecoder().decode(valorTexto);
 
-                    SessaoEstudo sessao = converterParaObjeto(iterator.value());
+                    SessaoEstudo sessao = converterParaObjeto(valor);
 
                     sessoes.add(sessao);
                 }
-
-                iterator.next();
             }
 
         } catch (IOException e) {
             throw new RuntimeException("Erro ao listar sessões: " + e.getMessage(), e);
-
-        } finally {
-            iterator.close();
         }
 
         sessoes.sort((a, b) -> b.getData().compareTo(a.getData()));
@@ -83,18 +75,22 @@ public class SessaoEstudoDAO {
     public Optional<SessaoEstudo> buscarPorId(int id) {
 
         try {
+            Jedis banco = MemuraiUtil.getJedis();
+
             String chave = "sessao:" + id;
 
-            byte[] valor = banco.get(chave.getBytes(StandardCharsets.UTF_8));
+            String valorTexto = banco.get(chave);
 
-            if (valor != null) {
+            if (valorTexto != null) {
+
+                byte[] valor = Base64.getDecoder().decode(valorTexto);
 
                 SessaoEstudo sessao = converterParaObjeto(valor);
 
                 return Optional.of(sessao);
             }
 
-        } catch (RocksDBException | IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Erro ao buscar sessão: " + e.getMessage(), e);
         }
 
@@ -104,11 +100,11 @@ public class SessaoEstudoDAO {
     public boolean atualizar(SessaoEstudo sessao) {
 
         try {
+            Jedis banco = MemuraiUtil.getJedis();
+
             String chave = "sessao:" + sessao.getId();
 
-            byte[] chaveBytes = chave.getBytes(StandardCharsets.UTF_8);
-
-            byte[] valorAtual = banco.get(chaveBytes);
+            String valorAtual = banco.get(chave);
 
             if (valorAtual == null) {
                 return false;
@@ -116,35 +112,26 @@ public class SessaoEstudoDAO {
 
             byte[] novoValor = converterParaBytes(sessao);
 
-            banco.put(chaveBytes, novoValor);
+            String novoValorTexto = Base64.getEncoder().encodeToString(novoValor);
+
+            banco.set(chave, novoValorTexto);
 
             return true;
 
-        } catch (RocksDBException | IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Erro ao atualizar sessão: " + e.getMessage(), e);
         }
     }
 
     public boolean excluir(int id) {
 
-        try {
-            String chave = "sessao:" + id;
+        Jedis banco = MemuraiUtil.getJedis();
 
-            byte[] chaveBytes = chave.getBytes(StandardCharsets.UTF_8);
+        String chave = "sessao:" + id;
 
-            byte[] valor = banco.get(chaveBytes);
+        long resultado = banco.del(chave);
 
-            if (valor == null) {
-                return false;
-            }
-
-            banco.delete(chaveBytes);
-
-            return true;
-
-        } catch (RocksDBException e) {
-            throw new RuntimeException("Erro ao excluir sessão: " + e.getMessage(), e);
-        }
+        return resultado > 0;
     }
 
     private byte[] converterParaBytes(SessaoEstudo sessao) throws IOException {
@@ -185,19 +172,13 @@ public class SessaoEstudoDAO {
 
         int id = dados.readInt();
 
-        Estudante estudante = new Estudante(
-                dados.readInt(),
-                dados.readUTF()
+        Estudante estudante = new Estudante(dados.readInt(), dados.readUTF()
         );
 
-        Disciplina disciplina = new Disciplina(
-                dados.readInt(),
-                dados.readUTF()
+        Disciplina disciplina = new Disciplina(dados.readInt(), dados.readUTF()
         );
 
-        Conteudo conteudo = new Conteudo(
-                dados.readInt(),
-                dados.readUTF()
+        Conteudo conteudo = new Conteudo(dados.readInt(), dados.readUTF()
         );
 
         LocalDate data = LocalDate.parse(dados.readUTF());
@@ -210,15 +191,7 @@ public class SessaoEstudoDAO {
 
         dados.close();
 
-        return new SessaoEstudo(
-                id,
-                estudante,
-                disciplina,
-                conteudo,
-                data,
-                duracao,
-                exercicios,
-                status
+        return new SessaoEstudo(id,estudante,disciplina,conteudo,data,duracao,exercicios, status
         );
     }
 }
